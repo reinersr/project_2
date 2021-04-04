@@ -63,8 +63,9 @@ object main{
     }
   }
 
+/*
   class BJKSTSketch(bucket_in: Set[(String, Int)] ,  z_in: Int, bucket_size_in: Int) extends Serializable {
-/* A constructor that requies intialize the bucket and the z value. The bucket size is the bucket size of the sketch. */
+/* A constructor that requires initialize the bucket and the z value. The bucket size is the bucket size of the sketch. */
 
     var bucket: Set[(String, Int)] = bucket_in
     var z: Int = z_in
@@ -75,16 +76,17 @@ object main{
       /* A constructor that allows you pass in a single string, zeroes of the string, and the bucket size to initialize the sketch */
       this(Set((s, z_of_s )) , z_of_s, bucket_size_in)
     }
-
+/*
     def +(that: BJKSTSketch): BJKSTSketch = {    /* Merging two sketches */
-
-    }
+		
+    }*/
 
     def add_string(s: String, z_of_s: Int): BJKSTSketch = {   /* add a string to the sketch */
-
+		val token = (s, z_of_s)
+		bucket += token
     }
   }
-
+*/
 
   def tidemark(x: RDD[String], trials: Int): Double = {
     val h = Seq.fill(trials)(new hash_function(2000000000))
@@ -100,12 +102,47 @@ object main{
 
 
   def BJKST(x: RDD[String], width: Int, trials: Int) : Double = {
-
+	var i = 0;
+	var k = 0;
+	var means: Seq[Int] = Seq.empty[Int]
+	
+	for(i <- 0 to trials){
+		val h = new hash_function(2000000000)
+		var B: Seq[(String, Int)] = Seq.empty[(String, Int)]
+		var z = 0;
+		for(k <- 0 to width){
+			var j = x.take(1).toString
+			if(h.zeroes(h.hash(j))>=z){
+				B = B:+ ((j, h.zeroes(h.hash(j))))
+				while(B.size >= width/(.05)){
+					z += 1
+					B = B.filter(_._2 >= z)
+				}
+			}
+		}
+		means = means:+ (B.size)*(2^z);
+	}
+	
+	val ans = means.sortWith(_ < _)(trials/2)
+	
+	return ans.toLong
   }
 
 
   def Tug_of_War(x: RDD[String], width: Int, depth:Int) : Long = {
-
+	var means: Seq[Int] = Seq.empty[Int]
+	for(i <- 0 to depth){
+		val h = new four_universal_Radamacher_hash_function()
+		var z = 0;
+		for(j <- 0 to width){
+			z = z + h.hash(x.take(1).toString).toInt;
+		}
+		means = means :+ z*z;
+	}
+	
+	val ans = means.sortWith(_ < _)(depth/2)
+	
+	return ans.toLong
   }
 
 
@@ -116,7 +153,14 @@ object main{
 
 
   def exact_F2(x: RDD[String]) : Long = {
-
+	val output = x.map(plate => (plate,1)).reduceByKey(_+_)
+	var F2 = 0;
+	var i = 0;
+	
+	for(i <- output.values){
+		F2 += i*i
+	}
+	return F2
   }
 
 
