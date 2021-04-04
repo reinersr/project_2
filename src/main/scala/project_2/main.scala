@@ -158,7 +158,7 @@ object main{
 	var i = 0;
 	
 	for(i <- output.values){
-		F2 += i*i
+		F2 = F2 + i*i
 	}
 	return F2
   }
